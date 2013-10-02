@@ -2,11 +2,10 @@ var schema = require("./schema"),
 	Chose = schema.Chose,
 	format = require('util').format,
 	fs = require('fs'),
-	execFile = require('child_process').execFile,
-	binPath = require('pngquant-bin').path,
 	crypto = require("crypto"),
 	fs = require("fs"),
-	spawn = require('child_process').spawn;
+	path = require("path"),
+	imageMin = require("./image-minify.js");
 
 
 var add = function(req,res){
@@ -42,7 +41,7 @@ var findAllChoses = function(req,res){
 
 var insertChose = function(req, res){
 	fileImage = req.files.image;
-	console.log(binPath);
+	console.log(pngquantPath);
 
 	// Creates Hash
 	var hash = crypto.createHash("md5")
@@ -50,34 +49,15 @@ var insertChose = function(req, res){
 	.digest("hex");
 	console.log(hash);
 
+	var ext = path.extname(fileImage.path).toLowerCase();
+
 	// Moving image into /uploads/
 	fs.readFile(fileImage.path, function (err, data) {
-	  var newPath = __dirname + "/uploads/" + hash + ".png";
+	  var newPath = __dirname + "/uploads/" + hash + ext;
 	  fs.writeFile(newPath, data, function (err) {
 	    console.log("moved file");
-
-	    	// Optmizing image
-			execFile(binPath, ["app/uploads/"+hash+".png"], function (error, stdout, stderr) {
-			    console.log('stdout: ' + stdout);
-			    console.log('stderr: ' + stderr);
-			    if (error !== null) {
-			        console.log('exec error: ' + error);
-			    } else { 
-				    console.log('Image minified');
-
-				    // remove original image
-				    var ls = spawn("rm", ["-r","app/uploads/"+hash+".png"]);
-				    ls.stdout.on("data", function(data){
-				    	console.log("stdout: " + data);
-				    });
-				    ls.stderr.on("data", function(data){
-				    	console.log("stderr: " + data);
-				    });
-				    ls.on("close", function(code){
-				    	console.log("child process exited width code " + code);
-				    });
-			    }
-			});
+	    console.log(newPath);
+	    imageMin.minify(newPath);
 	  });
 	});
 
@@ -89,7 +69,7 @@ var insertChose = function(req, res){
 			date: new Date(),
 			title: req.body.title,
 			content: req.body.content,
-			image: "./app/uploads/"+hash+"-fs8.png",
+			image: "./app/uploads/"+hash+"-fs8"+ext,
 			valid: false
 		});
 
@@ -100,11 +80,26 @@ var insertChose = function(req, res){
 			} else {
 			console.log("sucess");
 			res.status(201).send("image uploaded");
+			// TODO send email to admin to notify a new article to validate
 			}
 		});
 	}
 	
 };
+
+var removeImage = function(ext,hash){
+	// remove original image
+	    var ls = spawn("rm", ["-r","app/uploads/"+hash+ext]);
+	    ls.stdout.on("data", function(data){
+	    	console.log("stdout: " + data);
+	    });
+	    ls.stderr.on("data", function(data){
+	    	console.log("stderr: " + data);
+	    });
+	    ls.on("close", function(code){
+	    	console.log("child process exited width code " + code);
+	    });
+}
 
 var validationInputs = function(req,res){
 	//Sanitize inputs
@@ -121,22 +116,22 @@ var validationInputs = function(req,res){
 	// catch validation errors
 	var errors = req.validationErrors();
 	if(errors) {
-		res.send('Erreurs : ' + errors, 403);
+		res.send('Erreurs : ' + errors + "\n chose cannot be validated", 403);
 		return false;
 	} else {
 		return true;
 	}
 }
 
-// TODO
+// TODO 
 var validationChose = function(req,res){
 	if(req.body.valid === true){
 		req.chose.valid = true;
 		req.chose.save(function(err, chose){
 			if(err){
-				console.log("err : chose cannot be validated")
+				console.log("err : chose cannot be saved")
 			}else {
-				console.log("sucess : chose is validated");
+				console.log("sucess : chose is saved");
 			}
 		})
 	}

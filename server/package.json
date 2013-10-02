@@ -12,6 +12,8 @@
     "express": "~3.4.0",
     "mongoose": "~3.6.20",
     "express-validator": "~0.8.0",
-    "pngquant-bin": "~0.1.4"
+    "pngquant-bin": "~0.1.4",
+    "jpegtran-bin": "~0.2.0",
+    "gifsicle": "~0.1.3"
   }
 }
