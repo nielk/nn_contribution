@@ -1,5 +1,6 @@
 var mongoose = require("mongoose");
 
+// Connection to mongodb
 var connect = function(url) {
 	mongoose.connect(url);
 	var db = mongoose.connection;
@@ -7,13 +8,11 @@ var connect = function(url) {
 		console.log('error conenction mongodb');
 	});
 	db.once('open', function callback () {
-	  // yay!
-	  console.log('sucess connect mongodb');
+		console.log('sucess connect mongodb');
 	});
 };
 
-
-// Schema
+// Schema of Chose
 var Chose = mongoose.model('Chose',{
 	author: String,
 	email: String,
