@@ -5,7 +5,6 @@ var pngquantPath = require('pngquant-bin').path,
 	spawn        = require('child_process').spawn,
 	path         = require('path');
 
-
 var minify = function(imagePath, callback){
 
 	var ext = path.extname(imagePath).toLowerCase();
