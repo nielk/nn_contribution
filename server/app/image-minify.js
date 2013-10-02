@@ -5,6 +5,7 @@ execFile = require("child_process").execFile,
 spawn = require("child_process").spawn,
 path = require("path");
 
+
 var minify = function(imagePath, callback){
 
 	var ext = path.extname(imagePath).toLowerCase();
@@ -13,12 +14,12 @@ var minify = function(imagePath, callback){
 		execFile(pngquantPath, ["--force", "--ext", ".png", imagePath], function() {
 			callback(imagePath);
 		});
-	} else if( ext === ".jpg" || ext === ".jpeg") {
-		execFile(jpegtranPath, ["-outfile", imagePath, imagePath], function(){
+	} else if( ext === ".jpg" || ext === ".jpeg" ) {
+		execFile(jpegtranPath, ["-outfile", imagePath, imagePath], function() {
 			callback(imagePath);
 		});
-	} else if( ext === ".gif") {
-		execFile(gifsiclePath, ["-o", imagePath, imagePath], function(){
+	} else if( ext === ".gif" ) {
+		execFile(gifsiclePath, ["-o", imagePath, imagePath], function() {
 			callback(imagePath);
 		});
 	} else {
