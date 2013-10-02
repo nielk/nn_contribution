@@ -41,7 +41,6 @@ var findAllChoses = function(req,res){
 
 var insertChose = function(req, res){
 	fileImage = req.files.image;
-	console.log(pngquantPath);
 
 	// Creates Hash
 	var hash = crypto.createHash("md5")
@@ -57,7 +56,9 @@ var insertChose = function(req, res){
 	  fs.writeFile(newPath, data, function (err) {
 	    console.log("moved file");
 	    console.log(newPath);
-	    imageMin.minify(newPath);
+	    imageMin.minify(newPath, function(imagePath){
+	    	
+	    });
 	  });
 	});
 
@@ -86,20 +87,6 @@ var insertChose = function(req, res){
 	}
 	
 };
-
-var removeImage = function(ext,hash){
-	// remove original image
-	    var ls = spawn("rm", ["-r","app/uploads/"+hash+ext]);
-	    ls.stdout.on("data", function(data){
-	    	console.log("stdout: " + data);
-	    });
-	    ls.stderr.on("data", function(data){
-	    	console.log("stderr: " + data);
-	    });
-	    ls.on("close", function(code){
-	    	console.log("child process exited width code " + code);
-	    });
-}
 
 var validationInputs = function(req,res){
 	//Sanitize inputs

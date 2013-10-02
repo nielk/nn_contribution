@@ -1,50 +1,29 @@
-execFile = require('child_process').execFile,
-pngquantPath = require('pngquant-bin').path,
-jpegtranPath = require('jpegtran-bin').path,
-gifsiclePath = require('gifsicle').path,
-spawn = require('child_process').spawn,
-path = require('path');
+var pngquantPath = require("pngquant-bin").path,
+jpegtranPath = require("jpegtran-bin").path,
+gifsiclePath = require("gifsicle").path,
+execFile = require("child_process").execFile,
+spawn = require("child_process").spawn,
+path = require("path");
 
-var minify = function(imagePath){
+var minify = function(imagePath, callback){
+
 	var ext = path.extname(imagePath).toLowerCase();
 
-	if( ext === '.png') {
-		execFile(pngquantPath, [imagePath], function (error, stdout, stderr) {
-		    console.log('stdout: ' + stdout);
-		    console.log('stderr: ' + stderr);
-		    if (error !== null) {
-		        console.log('exec error: ' + error);
-		    } else { 
-			    console.log('png : Image minified');
-			    removeImage(imagePath);
-		    }
+	if( ext === ".png" ) {
+		execFile(pngquantPath, ["--force", "--ext", ".png", imagePath], function() {
+			callback(imagePath);
 		});
-	} else if( ext === '.jpg' || ext === '.jpeg') {
+	} else if( ext === ".jpg" || ext === ".jpeg") {
 		execFile(jpegtranPath, ["-outfile", imagePath, imagePath], function(){
-			console.log('jpg : Image minified');
+			callback(imagePath);
 		});
-	} else if( ext === '.gif') {
-		execFile(gifsiclePath, ['-o', imagePath, imagePath], function(){
-			console.log('gif : Image minified');
+	} else if( ext === ".gif") {
+		execFile(gifsiclePath, ["-o", imagePath, imagePath], function(){
+			callback(imagePath);
 		});
 	} else {
-		res.send("Image format not supported (we accept png, jpg, and gif)", 400);
+		res.send("Image format not supported (format accepted : png, jpg, and gif)", 400);
 	}
 };
-
-var removeImage = function(imagePath){
-	// remove original image
-	    var ls = spawn("rm", ["-r",imagePath]);
-	    ls.stdout.on("data", function(data){
-	    	console.log("stdout: " + data);
-	    });
-	    ls.stderr.on("data", function(data){
-	    	console.log("stderr: " + data);
-	    });
-	    ls.on("close", function(code){
-	    	console.log("child process exited width code " + code);
-	    });
-}
-
 
 module.exports.minify = minify;
