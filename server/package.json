@@ -1,0 +1,17 @@
+{
+  "name": "server",
+  "version": "0.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "BSD-2-Clause",
+  "dependencies": {
+    "express": "~3.4.0",
+    "mongoose": "~3.6.20",
+    "express-validator": "~0.8.0",
+    "pngquant-bin": "~0.1.4"
+  }
+}
