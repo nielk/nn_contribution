@@ -56,8 +56,10 @@ var insertChose = function(req, res){
 	  fs.writeFile(newPath, data, function (err) {
 	    console.log("moved file");
 	    console.log(newPath);
-	    imageMin.minify(newPath, function(imagePath){
-	    	
+	    imageMin.minify(newPath, function(err){
+	    	if( err != null ) {
+	    		console.log("optimisation failed");
+	    	}
 	    });
 	  });
 	});
