@@ -1,6 +1,9 @@
-var mongoose = require("mongoose");
+var mongoose = require('mongoose');
 
-// Connection to mongodb
+/**
+ * Connection to mongodb
+ * @param {String} url - the db url
+ */
 var connect = function(url) {
 	mongoose.connect(url);
 	var db = mongoose.connection;
@@ -12,7 +15,9 @@ var connect = function(url) {
 	});
 };
 
-// Schema of Chose
+/**
+ * Schema of Chose
+ */
 var Chose = mongoose.model('Chose',{
 	author: String,
 	email: String,

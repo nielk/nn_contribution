@@ -5,32 +5,39 @@ var schema   = require('./schema'),
 	crypto   = require('crypto'),
 	fs       = require('fs'),
 	path     = require('path'),
-	imageMin = require('./image-minify.js');
+	minify   = require('./image-minify.js');
 
-
-// Formulaire for uploading Chose
+/**
+ * Form for uploading Chose
+ * @param {Object} req - the recieved request
+ * @param {Object} res - the request being sent
+ */
 var add = function (req,res) {
-	res.send('<form method="post" enctype="multipart/form-data">'
-	+ '<p>Auteur: <input type="text" name="author" /></p>'
-	+ '<p>Email: <input type="text" name="email" /></p>'
-    + '<p>Title: <input type="text" name="title" /></p>'
-    + '<p>Content: <input type="text" name="content" /></p>'
-    + '<p>Image: <input type="file" name="image" /></p>'
-    + '<p><input type="submit" value="Upload" /></p>'
-    + '</form>', 200);
+	res.send(
+		'<form method="post" enctype="multipart/form-data">' +
+			'<p>Auteur: <input type="text" name="author" /></p>' +
+			'<p>Email: <input type="text" name="email" /></p>' +
+			'<p>Title: <input type="text" name="title" /></p>' +
+			'<p>Content: <input type="text" name="content" /></p>' +
+			'<p>Image: <input type="file" name="image" /></p>' +
+			'<p><input type="submit" value="Upload" /></p>' +
+		'</form>', 200);
 };
 
-
-// Returns a JSON of all Choses (to display on index.html)
-var findAllChoses = function (req,res){
+/**
+ * Returns a JSON of all Choses (to display on index.html)
+ * @param {Object} req - the recieved request
+ * @param {Object} res - the request being sent
+ */
+var findAllChoses = function (req,res) {
 
 	var query = Chose.find(function(err, choses) {
-		if( err != null ) {
+		if(err !== null) {
 			console.log('errror : cannot find Chose');
 		} else {
 			query.select('author title content image');
 			query.exec(function (err,choses) {
-				if( err != null ) {
+				if(err !== null) {
 					console.log('err : query failed');
 				} else {
 					console.log('sucess : query');
@@ -38,16 +45,19 @@ var findAllChoses = function (req,res){
 				}
 			});
 		}
-	});	
+	});
 };
 
-
-// Insert a new Chose 
+/**
+ * Insert a new Chose
+ * @param {Object} req - the recieved request
+ * @param {Object} res - the request being sent
+ */
 var insertChose = function (req, res) {
-	
+
 	// the image uploaded
-	var fileImage = req.files.image; 
-	// Generate a hash for image name
+	var fileImage = req.files.image;
+	// generate a hash for image name
 	var hash = crypto.createHash('md5').update(fileImage.path).digest('hex');
 	// get the extension of image uploaded
 	var ext = path.extname(fileImage.path).toLowerCase();
@@ -56,15 +66,15 @@ var insertChose = function (req, res) {
 	// new path of the uploaded image
 	var newPath = __dirname + '/uploads/' + imageName;
 
-	// Move the uploaded image from temp to uploads directory
+	// move the uploaded image from temp to uploads directory
 	fs.readFile(fileImage.path, function (err, data) {
 	  fs.writeFile(newPath, data, function (err) {
-	    if ( err != null ) {
+	    if (err !== null) {
 	    	throw new Error('Error : fs.writeFile...');
 	    } else {
-	    	// Minify the new image in uploads directory
-		    imageMin.minify(newPath, function (err) {
-		    	if( err != null ) {
+	    	// minify the new image in uploads directory
+		    minify(newPath, function (err) {
+		    	if(err !== null) {
 		    		throw new Error('Error : minification failed...');
 		    	}
 		    });
@@ -73,8 +83,8 @@ var insertChose = function (req, res) {
 	});
 
 	// check if inputs from formulaire are safe
-	if( validationInputs(req,res) === true ) {
-		
+	if(validationInputs(req,res) === true) {
+
 		// create our chose with verified inputs
 		var newChose = new Chose({
 			author: req.body.author,
@@ -86,7 +96,7 @@ var insertChose = function (req, res) {
 			valid: false
 		});
 
-		// Save in database the newChose
+		// save in database the newChose
 		newChose.save(function (err) {
 			if(err) {
 				throw new Error('Error : cannot save object Chose');
@@ -98,15 +108,18 @@ var insertChose = function (req, res) {
 	}
 };
 
+/**
+ * Check if inputs from formulaire are safe
+ * @param {Object} req - the recieved request
+ * @param {Object} res - the request being sent
+ */
+var validationInputs = function (req,res) {
 
-// check if inputs from formulaire are safe 
-var validationInputs = function (req,res){
-	
-	//Sanitize inputs
+	// sanitize inputs
 	req.sanitize('title').escape();
 	req.sanitize('content').escape();
 
-	// Verify users inputs
+	// verify users inputs
 	req.assert('author', 'required').notEmpty().len(1,64).isAlpha();
 	req.assert('email', 'required').notEmpty().isEmail().len(5,64);
 	req.assert('title', 'required').notEmpty().len(1,45);
@@ -116,15 +129,19 @@ var validationInputs = function (req,res){
 	// catch validation errors
 	var errors = req.validationErrors();
 	if(errors) {
-		res.send('Erreurs : ' + errors + '\n chose cannot be validated', 403);
+		res.send('Errors : ' + errors + '\n chose cannot be validated', 403);
 		return false;
 	} else {
 		return true;
 	}
 }
 
-// TODO : publish a Chose {valid : true}
-var validationChose = function (req,res){
+/**
+ * Validate the chose in order t be published
+ * @param {Object} req - the recieved request
+ * @param {Object} res - the request being sent
+ */
+var validationChose = function (req,res) {
 	if(req.body.valid === true){
 		req.chose.valid = true;
 		req.chose.save(function(err, chose){
@@ -133,7 +150,7 @@ var validationChose = function (req,res){
 			}else {
 				console.log('sucess : chose is saved');
 			}
-		})
+		});
 	}
 }
 
