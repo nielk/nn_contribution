@@ -13,29 +13,31 @@ var minify = function(imagePath, callback){
 
 	var ext = path.extname(imagePath).toLowerCase();
 
-	if (ext === '.png') {
-		execFile(pngquantPath, ['--force', '--ext', '.png', imagePath], function(err) {
-			if (callback && typeof(callback) === 'function') {
-				callback(err);
-			}
-		});
-	} else if (ext === '.jpg' || ext === '.jpeg') {
-		execFile(jpegtranPath, ['-outfile', imagePath, imagePath], function(err) {
-			if (callback && typeof(callback) === 'function') {
-				callback(err);
-			}
-		});
-	} else if (ext === '.gif') {
-		execFile(gifsiclePath, ['-o', imagePath, imagePath], function(err) {
-			if (callback && typeof(callback) === 'function') {
-				callback(err);
-			}
-		});
-	} else {
-		if (callback && typeof(callback) === 'function') {
-				callback(new Error('Image format not supported (accepted formats: png, jpg and gif)'));
-		}
-	}
+	
+
+	// if (ext === '.png') {
+	// 	execFile(pngquantPath, ['--force', '--ext', '.png', imagePath], function(err) {
+	// 		if (callback && typeof(callback) === 'function') {
+	// 			callback(err);
+	// 		}
+	// 	});
+	// } else if (ext === '.jpg' || ext === '.jpeg') {
+	// 	execFile(jpegtranPath, ['-outfile', 'min'+imagePath, imagePath], function(err) {
+	// 		if (callback && typeof(callback) === 'function') {
+	// 			callback(err);
+	// 		}
+	// 	});
+	// } else if (ext === '.gif') {
+	// 	execFile(gifsiclePath, ['-o', imagePath, imagePath], function(err) {
+	// 		if (callback && typeof(callback) === 'function') {
+	// 			callback(err);
+	// 		}
+	// 	});
+	// } else {
+	// 	if (callback && typeof(callback) === 'function') {
+	// 			callback(new Error('Image format not supported (accepted formats: png, jpg and gif)'));
+	// 	}
+	// }
 };
 
 module.exports = minify;

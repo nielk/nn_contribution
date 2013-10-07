@@ -14,15 +14,15 @@ app.use(express.bodyParser());
 app.use(expressValidator());
 
 // static directory for uploaded images
+app.use(express.static(__dirname + '/../../public/dist'));
 app.use('/uploads', express.static(__dirname + '/uploads'));
 
 // connection to mongodb
 schema.connect(MONGO_URL);
 
 // routes
-app.get('/', routes.findAllChoses); // index
-app.get('/create', routes.add); // display formulaire to upload image
-app.post('/create', routes.insertChose); // get the images
+app.get('/chose', routes.findAllChoses); // index
+app.post('/chose', routes.insertChose); // get the images
 
 // start the server
 app.listen(PORT);
