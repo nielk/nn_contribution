@@ -38,35 +38,35 @@ var findAllChoses = function (req,res) {
  */
 var insertChose = function (req, res) {
 
-	// // the image uploaded
-	// var fileImage = req.files.image;
-	// // generate a hash for image name
-	// var hash = crypto.createHash('md5').update(fileImage.path).digest('hex');
-	// // get the extension of image uploaded
-	// var ext = path.extname(fileImage.path).toLowerCase();
-	// // new hashed image name
-	// var imageName = hash + ext;
-	// // new path of the uploaded image
-	// var newPath = __dirname + '/uploads/' + imageName;
+	// the image uploaded
+	var fileImage = req.files.image;
+	// generate a hash for image name
+	var hash = crypto.createHash('md5').update(fileImage.path).digest('hex');
+	// get the extension of image uploaded
+	var ext = path.extname(fileImage.path).toLowerCase();
+	// new hashed image name
+	var imageName = hash + ext;
+	// new path of the uploaded image
+	var newPath = __dirname + '/uploads/' + imageName;
 
-	// // move the uploaded image from temp to uploads directory
-	// fs.readFile(fileImage.path, function (err, data) {
-	//   fs.writeFile(newPath, data, function (err) {
-	//     if (err !== null) {
-	//     	throw new Error('Error : fs.writeFile...');
-	//     } else {
-	//     	// minify the new image in uploads directory
-	// 	    minify(newPath, function (err) {
-	// 	    	if(err !== null) {
-	// 	    		throw new Error('Error : minification failed...');
-	// 	    	}
-	// 	    });
-	//     }
-	//   });
-	// });
+	// move the uploaded image from temp to uploads directory
+	fs.readFile(fileImage.path, function (err, data) {
+	  fs.writeFile(newPath, data, function (err) {
+	    if (err !== null) {
+	    	throw new Error('Error : fs.writeFile...');
+	    } else {
+	    	// minify the new image in uploads directory
+		    minify(newPath, function (err) {
+		    	if(err !== null) {
+		    		throw new Error('Error : minification failed...');
+		    	}
+		    });
+	    }
+	  });
+	});
 
 	// check if inputs from formulaire are safe
-	// if(validationInputs(req,res) === true) {
+	if(validationInputs(req,res) === true) {
 
 		// create our chose with verified inputs
 		var newChose = new Chose({
@@ -75,8 +75,7 @@ var insertChose = function (req, res) {
 			date: new Date(),
 			title: req.body.title,
 			content: req.body.content,
-			image: "none",
-			// image: imageName,
+			image: imageName,
 			valid: false
 		});
 
@@ -89,7 +88,7 @@ var insertChose = function (req, res) {
 				// TODO send email to admin to notify a new article to validate
 			}
 		});
-	// }
+	}
 };
 
 /**
