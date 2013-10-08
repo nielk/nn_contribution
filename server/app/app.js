@@ -24,6 +24,8 @@ schema.connect(MONGO_URL);
 app.get('/chose', routes.findAllChoses); // index
 app.post('/chose', routes.insertChose); // get the images
 
+app.get('/valid/:imageName', routes.validationChose);
+
 // start the server
 app.listen(PORT);
 

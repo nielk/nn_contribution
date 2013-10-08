@@ -5,7 +5,17 @@ var schema   = require('./schema'),
 	crypto   = require('crypto'),
 	fs       = require('fs'),
 	path     = require('path'),
-	minify   = require('./image-minify.js');
+	minify   = require('./image-minify.js'),
+	nodemailer = require("nodemailer");
+
+
+var smtpTransport = nodemailer.createTransport("SMTP",{
+    service: "Gmail",
+    auth: {
+        user: "cecinestpasavendre@gmail.com",
+        pass: "Levlippcestsuper"
+    }
+});
 
 /**
  * Returns a JSON of all Choses (to display on index.html)
@@ -46,25 +56,23 @@ var insertChose = function (req, res) {
 	var ext = path.extname(fileImage.path).toLowerCase();
 	// new hashed image name
 	var imageName = hash + ext;
-	// new path of the uploaded image
+		// new path of the uploaded image
 	var newPath = __dirname + '/uploads/' + imageName;
-
 	// move the uploaded image from temp to uploads directory
 	fs.readFile(fileImage.path, function (err, data) {
-	  fs.writeFile(newPath, data, function (err) {
-	    if (err !== null) {
-	    	throw new Error('Error : fs.writeFile...');
-	    } else {
-	    	// minify the new image in uploads directory
-		    minify(newPath, function (err) {
-		    	if(err !== null) {
-		    		throw new Error('Error : minification failed...');
-		    	}
-		    });
-	    }
-	  });
+		fs.writeFile(newPath, data, function (err) {
+			if (err !== null) {
+				throw new Error('Error : fs.writeFile...');
+			} else {
+			// minify the new image in uploads directory
+				minify(newPath, function (err) {
+					if(err !== null) {
+						throw new Error('Error : minification failed...');
+					}
+				});
+			}
+		});
 	});
-
 	// check if inputs from formulaire are safe
 	if(validationInputs(req,res) === true) {
 
@@ -85,7 +93,24 @@ var insertChose = function (req, res) {
 				throw new Error('Error : cannot save object Chose');
 			} else {
 				res.status(201).send('image uploaded');
-				// TODO send email to admin to notify a new article to validate
+				var mailOptions = {
+				    from: "cecinestpasavendre ✔ <cecinestpasavendre@vlipp.fr>", // sender address
+				    to: "oger.alexandre@gmail.com", // list of receivers
+				    subject: "Nouveau contenu à valider", // Subject line
+				    text: "Un nouvel objet à valider a été ajouté !", // plaintext body
+				    html: "<b>Hello, un nouvel objet a été ajouté ! cliquer ici pour le valider : <a href=\"http://localhost:9999/valid/"+imageName+"\">cliquer</a></b>" // html body
+				}
+				// send mail with defined transport object
+				smtpTransport.sendMail(mailOptions, function(error, response){
+				    if(error){
+				        console.log(error);
+				    }else{
+				        console.log("Message sent: " + response.message);
+				    }
+
+				    // if you don't want to use this transport object anymore, uncomment following line
+				    //smtpTransport.close(); // shut down the connection pool, no more messages
+				});
 			}
 		});
 	}
@@ -125,17 +150,40 @@ var validationInputs = function (req,res) {
  * @param {Object} res - the request being sent
  */
 var validationChose = function (req,res) {
-	if(req.body.valid === true){
-		req.chose.valid = true;
-		req.chose.save(function(err, chose){
-			if(err){
-				console.log('err : chose cannot be saved')
-			}else {
-				console.log('sucess : chose is saved');
-			}
-		});
-	}
+	var imageName = req.params.imageName;
+	console.log(imageName);
+
+	var query = { image: imageName };
+	
+	console.log('query : '+query);
+
+	Chose.findOneAndUpdate(query, { valid: true }, function(err){
+		if(err){
+			res.send('L\'Objet n\'a pas été validé !', 403);
+		} else {
+			console.log("chose validated !!");
+	  		res.send('Objet validé !', 200);
+		}
+	});
+
+	// Chose.findOne({ image: imageName }, function (err, doc) {
+	//   if (err) {
+	//   	res.send('L\'Objet n\'a pas été validé !', 403);
+	//   }else{
+	//   doc.valid = true;
+	//   doc.save(function(err){
+	//   	if(err) {
+	//   		res.send('L\'Objet n\'a pas été validé !', 403);
+	//   	}
+	//   	console.log("chose validated !!");
+	//   	res.send('Objet validé !', 200);
+	//   });
+	  
+	//   }
+	// });
+	
 }
 
+module.exports.validationChose = validationChose;
 module.exports.findAllChoses = findAllChoses;
 module.exports.insertChose = insertChose;
