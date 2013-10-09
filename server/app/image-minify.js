@@ -18,7 +18,6 @@ var minify = function(imagePath, callback){
 	// resize image
 	imageMagick.convert([imagePath, '-resize', '500x420', imagePath], function(err, stdout){
 		if(err) throw err;
-		console.log('stdout: ', stdout);
 
 		// optimize the image
 		if (ext === '.png') {

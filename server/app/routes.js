@@ -5,53 +5,19 @@ var schema   = require('./schema'),
 	crypto   = require('crypto'),
 	fs       = require('fs'),
 	path     = require('path'),
-	minify   = require('./image-minify.js'),
-	nodemailer = require("nodemailer");
-
-// address mail of moderator
-var moderator = "oger.alexandre@gmail.com";
-
-// mail settings
-var smtpTransport = nodemailer.createTransport("SMTP",{
-    service: "Gmail",
-    auth: {
-        user: "cecinestpasavendre@gmail.com",
-        pass: "Levlippcestsuper"
-    }
-});
-
-/**
- * Send an email from moderator
- * @param {String} Msg - HTML content of the mail
- * @param {String} Subject - Subject of the mail
- * @param {String} To - receiver of the mail
- */
-var sendEmail = function(Msg, Subject, To) {
-
-	var mailOptions = {
-		generateTextFromHTML: true,
-		from: "cecinestpasavendre ✔ <cecinestpasavendre@vlipp.fr>", // sender address
-		to: To, // list of receivers
-		subject: Subject, // Subject line
-		html: Msg // html body
-	};
-
-	// send mail with defined transport object
-	smtpTransport.sendMail(mailOptions, function(error, response){
-		if(error){
-			console.log(error);
-		}else{
-		console.log("Message sent: " + response.message);
-		}
-	});
-};
+	minify   = require('./image-minify.js');
+	mail     = require('./mail.js');
 
 // this is the key will be sent in email link
 // the password allow only receivers of moderation email
 // to acces to the validation page
 // so nobody can acces to the validation page without
 // the password in params url
+// TODO : change this value when the app will be deployed
 var password = 'Levlippcestsuper';
+
+// address mail of moderator
+var moderator = "oger.alexandre@gmail.com";
 
 /**
  * Returns a JSON of all Choses (to display on index.html)
@@ -62,15 +28,14 @@ var findAllChoses = function (req,res) {
 
 	var query = Chose.find(function(err, choses) {
 		if(err !== null) {
-			console.log('errror : cannot find Chose');
+			res.send('error : \n'+err, 500);
 		} else {
 			// select only validated chose
 			query.select('author title content image date').where('valid',true);
 			query.exec(function (err,choses) {
 				if(err !== null) {
-					console.log('err : query failed');
+					res.send('query exec failed \n'+err, 500);
 				} else {
-					console.log('sucess : query');
 					// send the JSON of choses to client
 					res.status(200).send(choses);
 				}
@@ -101,12 +66,12 @@ var insertChose = function (req, res) {
 	fs.readFile(fileImage.path, function (err, data) {
 		fs.writeFile(newPath, data, function (err) {
 			if (err !== null) {
-				throw new Error('Error : fs.writeFile...');
+				res.send('error : '+err , 500);
 			} else {
 			// minify the new image in uploads directory
 				minify(newPath, function (err) {
 					if(err !== null) {
-						throw new Error('Error : minification failed...');
+						res.send('error : minification failed...\n'+err , 500);
 					}
 				});
 			}
@@ -126,31 +91,31 @@ var insertChose = function (req, res) {
 			image: imageName,
 			valid: false
 		});
-		
+
 		// save in database the newChose
 		newChose.save(function (err) {
 			if(err) {
-				throw new Error('Error : cannot save object Chose');
+				res.send('error : cannot save object Chose\n'+err , 500);
 			} else {
 
 				res.status(201).send('image uploaded');
 
 				// send an email to the moderator
-				var Msg = "<b>Hello, un nouvel objet a été ajouté ! cliquer ici pour le valider : "+
+				var msg = "<b>Hello, un nouvel objet a été ajouté ! cliquer ici pour le valider : "+
 					"<a href=\"http://localhost:9999/valid/"+imageName+"/"+password+"\">cliquer</a></b>",
-					Subject = "Nouveau contenu à valider",
-					To = moderator;
+					subject = "Nouveau contenu à valider",
+					to = moderator;
 
-				sendEmail(Msg, Subject, To);
+				mail(msg, subject, to, req, res);
 
 				// send an email to the contributor
-				Msg = "Bonjour ! L'objet que vous venez de poster sur <a href='http://cecinestpasavendre.vlipp.fr'>"+
+				msg = "Bonjour ! L'objet que vous venez de poster sur <a href='http://cecinestpasavendre.vlipp.fr'>"+
 					"http://cecinestpasavendre.vlipp.fr</a> est en cours de validation. Vous receverez"+
 					" un email lorsqu'il sera validé.";
-				Subject = "Votre objet est en cours de validation";
-				To = req.body.email;
+				subject = "Votre objet est en cours de validation";
+				to = req.body.email;
 
-				sendEmail(Msg, Subject, To);
+				mail(msg, subject, to, req, res);
 			}
 		});
 	}
@@ -173,7 +138,7 @@ var validationInputs = function (req,res) {
 	req.assert('email', 'required').notEmpty().isEmail().len(5,40);
 	req.assert('title', 'required').notEmpty().len(1,30);
 	req.assert('content', 'required').notEmpty().len(10,300);
-	req.assert('image', 'required'); // TODO : validation image
+	req.assert('image', 'required'); // toDO : validation image
 
 	// catch validation errors
 	var errors = req.validationErrors();
@@ -200,15 +165,15 @@ var validationChose = function (req,res) {
 
 		// get the imageName var from params url
 		var imageName = req.params.imageName;
-		console.log(imageName);
 
 		// select the objet who match with the imageName
 		var query = { image: imageName };
-		
-		console.log('query : '+query);
 
 		// send a formulaire with contents of the chose
 		Chose.findOne(query, function(err, chose) {
+			if(err != null || chose === null) {
+				res.send('error : \n'+err , 500);
+			} else {
 			res.send('<form method="post" action="/UpdateChose/'+imageName+'/'+pwd+'">'+
 					'<input type="text" name="author" value="'+chose.author+'">'+
 					'<input type="text" name="email" value="'+chose.email+'">'+
@@ -217,6 +182,7 @@ var validationChose = function (req,res) {
 					'Supprimer : <input type="checkbox" name="deleted">'+
 					'<img src="../../uploads/'+chose.image+'">'+
 					'<input type="submit" value="Valider" onclick="" ></form>',200);
+			}
 		});
 
 	} else  { // pasword wrong
@@ -237,16 +203,11 @@ var updateChose = function(req,res) {
 	// can't acces to the page if password is wrong
 	if(pwd === password) {
 
-		console.log(req);
-
 		// get the imageName var from params url
 		var imageName = req.params.imageName;
-		console.log(imageName);
 
 		// select the objet who match with the imageName
 		var query = { image: imageName };
-		
-		console.log('query : '+query);
 
 		// find the current chose in db
 		Chose.findOne(query, function(err, chose){
@@ -259,8 +220,9 @@ var updateChose = function(req,res) {
 						chose.remove(function(err){ 
 							if(err) {
 								res.send('l\'objet n\'a pas été supprimé ! :( \n'+err,403);
+							} else {
+								res.send('l\'objet a bien été supprimé !',200);
 							}
-							res.send('l\'objet a bien été supprimé !',200);
 						});
 				} else {
 					
@@ -277,18 +239,17 @@ var updateChose = function(req,res) {
 					// save the new updated content of the chose
 					chose.save(function(err){
 
-						console.log("chose validated !!");
 						res.send('Objet validé !', 200);
 
 						// send email to contributor to notify the new validated content
-						var Msg = "Bonjour ! L'objet que vous avez poster sur <a href='http://cecinestpasavendre.vlipp.fr'>"+
+						var msg = "Bonjour ! L'objet que vous avez poster sur <a href='http://cecinestpasavendre.vlipp.fr'>"+
 							"http://cecinestpasavendre.vlipp.fr</a> a été validé ! Vous pouvez le consulter sur "+
 							"cette page : <a href='http://cecinestpasavendre.vlipp.fr/contrib.html'>"+
 							"http://cecinestpasavendre.vlipp.fr/contrib.html</a>",
-							Subject = "Votre objet a été validé",
-							To = req.body.email;
+							subject = "Votre objet a été validé",
+							to = req.body.email;
 
-						sendEmail(Msg, Subject, To);
+						mail(msg, subject, to, req, res);
 
 					});
 				}
