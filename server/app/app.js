@@ -23,8 +23,10 @@ schema.connect(MONGO_URL);
 // routes
 app.get('/chose', routes.findAllChoses); // index
 app.post('/chose', routes.insertChose); // get the images
+// update the new validated contents
 app.post('/UpdateChose/:imageName/:pwd', routes.updateChose);
 
+// acces to the validation page
 app.get('/valid/:imageName/:pwd', routes.validationChose);
 
 // start the server

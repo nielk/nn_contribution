@@ -1,7 +1,7 @@
 var pngquantPath = require('pngquant-bin').path,
 	jpegtranPath = require('jpegtran-bin').path,
 	gifsiclePath = require('gifsicle').path,
-	imageMagick = require('imagemagick'),
+	imageMagick  = require('imagemagick'),
 	execFile     = require('child_process').execFile,
 	path         = require('path');
 
@@ -12,6 +12,7 @@ var pngquantPath = require('pngquant-bin').path,
  */
 var minify = function(imagePath, callback){
 
+	// extension of the image (.jpg .png...)
 	var ext = path.extname(imagePath).toLowerCase();
 
 	// resize image
@@ -19,12 +20,13 @@ var minify = function(imagePath, callback){
 		if(err) throw err;
 		console.log('stdout: ', stdout);
 
+		// optimize the image
 		if (ext === '.png') {
-		execFile(pngquantPath, ['--force', '--ext', '.png', imagePath], function(err) {
-			if (callback && typeof(callback) === 'function') {
-				callback(err);
-			}
-		});
+			execFile(pngquantPath, ['--force', '--ext', '.png', imagePath], function(err) {
+				if (callback && typeof(callback) === 'function') {
+					callback(err);
+				}
+			});
 		} else if (ext === '.jpg' || ext === '.jpeg') {
 			execFile(jpegtranPath, ['-outfile', imagePath, imagePath], function(err) {
 				if (callback && typeof(callback) === 'function') {
@@ -39,13 +41,10 @@ var minify = function(imagePath, callback){
 			});
 		} else {
 			if (callback && typeof(callback) === 'function') {
-					callback(new Error('Image format not supported (accepted formats: png, jpg and gif)'));
+					callback(new Error('Image format not supported (accepted formats: png, jpg)'));
 			}
 		}
-		
 	});
-
-	
 };
 
 module.exports = minify;
