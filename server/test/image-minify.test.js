@@ -43,7 +43,7 @@ describe('image-minify', function() {
 	it('should return an error in the callback if the image does not exist', function(done) {
 		minify('lostImage.png', function(err) {
 			expect(err).to.be.an.instanceof(Error);
-			// expect(err.message).to.equal('Command failed:   error: cannot open lostImage.png for reading\n');
+			expect(err.message).to.equal('Command failed:   error: cannot open lostImage.png for reading\n');
 			done();
 		});
 	});
@@ -52,7 +52,7 @@ describe('image-minify', function() {
 	it('should return an error in the callback if not png, gif or jpg', function(done) {
 		minify(fakePath, function(err) {
 			expect(err).to.be.an.instanceof(Error);
-			// expect(err.message).to.equal('Image format not supported (accepted formats: png, jpg and gif)');
+			expect(err.message).to.equal('Image format not supported (accepted formats: png, jpg)');
 			done();
 		});
 	});

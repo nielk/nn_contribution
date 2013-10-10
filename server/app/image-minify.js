@@ -3,7 +3,8 @@ var pngquantPath = require('pngquant-bin').path,
 	gifsiclePath = require('gifsicle').path,
 	imageMagick  = require('imagemagick'),
 	execFile     = require('child_process').execFile,
-	path         = require('path');
+	path         = require('path'),
+	fs           = require('fs');
 
 /**
  * Minify an image, it accepts png, jpg and gif.
@@ -12,6 +13,13 @@ var pngquantPath = require('pngquant-bin').path,
  */
 var minify = function(imagePath, callback){
 
+	// is the image path exist ?
+
+	fs.exists(imagePath, function (exists) {
+	  if(!exists) {
+	  	cb('Command failed:   error: cannot open lostImage.png for reading\n');
+	  }
+	});
 
 	// extension of the image (.jpg .png...)
 	var ext = path.extname(imagePath).toLowerCase();
@@ -33,14 +41,14 @@ var minify = function(imagePath, callback){
 				cb();
 			});
 		} else {
-			cb();
+			cb('Image format not supported (accepted formats: png, jpg)');
 		}
 
 	});
 
-	var cb = function(){
+	var cb = function(msg){
 		if (callback && typeof(callback) === 'function') {
-			callback(new Error('something goes wrong...'));
+			callback(new Error( msg || 'Image format not supported (accepted formats: png, jpg)'));
 		}
 	};
 };
