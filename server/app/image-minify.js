@@ -41,7 +41,7 @@ var minify = function(imagePath, callback){
 				cb();
 			});
 		} else {
-			cb('Image format not supported (accepted formats: png, jpg)');
+			cb();
 		}
 
 	});
