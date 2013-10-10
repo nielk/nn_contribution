@@ -12,38 +12,37 @@ var pngquantPath = require('pngquant-bin').path,
  */
 var minify = function(imagePath, callback){
 
+
 	// extension of the image (.jpg .png...)
 	var ext = path.extname(imagePath).toLowerCase();
 
 	// resize image
 	imageMagick.convert([imagePath, '-resize', '500x420', imagePath], function(err, stdout){
-		if(err) throw err;
-
+		
 		// optimize the image
 		if (ext === '.png') {
 			execFile(pngquantPath, ['--force', '--ext', '.png', imagePath], function(err) {
-				if (callback && typeof(callback) === 'function') {
-					callback(err);
-				}
+				cb();
 			});
 		} else if (ext === '.jpg' || ext === '.jpeg') {
 			execFile(jpegtranPath, ['-outfile', imagePath, imagePath], function(err) {
-				if (callback && typeof(callback) === 'function') {
-					callback(err);
-				}
+				cb();
 			});
 		} else if (ext === '.gif') {
 			execFile(gifsiclePath, ['-o', imagePath, imagePath], function(err) {
-				if (callback && typeof(callback) === 'function') {
-					callback(err);
-				}
+				cb();
 			});
 		} else {
-			if (callback && typeof(callback) === 'function') {
-					callback(new Error('Image format not supported (accepted formats: png, jpg)'));
-			}
+			cb();
 		}
+
 	});
+
+	var cb = function(){
+		if (callback && typeof(callback) === 'function') {
+			callback(new Error('something goes wrong...'));
+		}
+	};
 };
 
 module.exports = minify;
