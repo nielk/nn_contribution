@@ -171,7 +171,7 @@ var validationChose = function (req,res) {
 
 		// send a formulaire with contents of the chose
 		Chose.findOne(query, function(err, chose) {
-			if(err != null || chose === null) {
+			if(err !== null || chose === null) {
 				res.send('error : \n'+err , 500);
 			} else {
 			res.send('<form method="post" action="/UpdateChose/'+imageName+'/'+pwd+'">'+

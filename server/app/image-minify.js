@@ -1,6 +1,5 @@
 var pngquantPath = require('pngquant-bin').path,
 	jpegtranPath = require('jpegtran-bin').path,
-	gifsiclePath = require('gifsicle').path,
 	imageMagick  = require('imagemagick'),
 	execFile     = require('child_process').execFile,
 	path         = require('path'),
@@ -13,42 +12,70 @@ var pngquantPath = require('pngquant-bin').path,
  */
 var minify = function(imagePath, callback){
 
-	// is the image path exist ?
+	// is the image file exists ?
+	fs.stat(imagePath, function(err, stat) {
+		if(err === null) { // file exists
+			// extension image (png, jpg etc...)
+			var ext = path.extname(imagePath).toLowerCase();
 
-	fs.exists(imagePath, function (exists) {
-	  if(!exists) {
-	  	cb('Command failed:   error: cannot open lostImage.png for reading\n');
-	  }
-	});
+			switch (ext) {
+				case '.png':
+					// resize dimension of image
+					imageMagick.convert([imagePath, '-resize', '500x420', imagePath], function(err) {
+						// optimize image
+						execFile(pngquantPath, ['--force', '--ext', '.png', imagePath], function(err) {
+							if(err !== null) {
+								cb(err);
+							} else {
+								cb();
+							}
+						});
+					});
+					break;
 
-	// extension of the image (.jpg .png...)
-	var ext = path.extname(imagePath).toLowerCase();
-
-	// resize image
-	imageMagick.convert([imagePath, '-resize', '500x420', imagePath], function(err, stdout){
-		
-		// optimize the image
-		if (ext === '.png') {
-			execFile(pngquantPath, ['--force', '--ext', '.png', imagePath], function(err) {
-				cb();
-			});
-		} else if (ext === '.jpg' || ext === '.jpeg') {
-			execFile(jpegtranPath, ['-outfile', imagePath, imagePath], function(err) {
-				cb();
-			});
-		} else if (ext === '.gif') {
-			execFile(gifsiclePath, ['-o', imagePath, imagePath], function(err) {
-				cb();
-			});
-		} else {
-			cb();
+				case '.jpg':
+				case '.jpeg':
+					// resize dimension of image
+					imageMagick.convert([imagePath, '-resize', '500x420', imagePath], function(err) {
+						// optimize image
+						execFile(jpegtranPath, ['-outfile', imagePath, imagePath], function(err) {
+							if(err !== null) {
+								cb(err);
+							} else {
+								cb();
+							}
+						});
+					});
+					break;
+				// image extension not allowed
+				default:
+					if(err !== null) {
+						cb(err, 'Image format not supported (accepted formats: png, jpg)');
+					} else {
+						cb(new Error(), 'Image format not supported (accepted formats: png, jpg)');
+					}
+			}		
+		} else if(err.code == 'ENOENT') { // file doesn't exist
+			if(err !== null) {
+					cb(err, 'Command failed:   error: cannot open lostImage.png for reading\n');
+				} else {
+					cb();
+				}
+		} else { // another type of error
+			if(err !== null) {
+					cb(err);
+				} else {
+					cb();
+				}
 		}
-
 	});
-
-	var cb = function(msg){
-		if (callback && typeof(callback) === 'function') {
-			callback(new Error( msg || 'Image format not supported (accepted formats: png, jpg)'));
+	
+	// callback
+	var cb = function(err, msg){
+		if (callback && typeof(callback) === 'function' && err !== null) {
+			callback(new Error(msg));
+		} else {
+			callback();
 		}
 	};
 };

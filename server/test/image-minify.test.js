@@ -6,7 +6,7 @@ var fs = require('fs.extra'),
 
 var fakePath = '/my/fake/path.zip';
 var fixture = './test/fixtures/pony.';
-var exts = ['png', 'jpg', 'jpeg', 'gif'];
+var exts = ['png', 'jpg', 'jpeg'];
 
 // copy the test image and compare size before and after minification
 var testFormat = function(format, done) {
@@ -49,8 +49,8 @@ describe('image-minify', function() {
 	});
 
 	// test an invalid extension
-	it('should return an error in the callback if not png, gif or jpg', function(done) {
-		minify(fakePath, function(err) {
+	it('should return an error in the callback if not png or jpg', function(done) {
+		minify('./test/fixtures/pony.gif', function(err) {
 			expect(err).to.be.an.instanceof(Error);
 			expect(err.message).to.equal('Image format not supported (accepted formats: png, jpg)');
 			done();
