@@ -9,7 +9,7 @@ clean:
 	rm -rf reports
 
 test:
-	$(MOCHA) -R spec --timeout 2000 $(TESTS)
+	$(MOCHA) -R spec --timeout 10000 $(TESTS)
 
 jshint:
 	$(JSHINT) app test

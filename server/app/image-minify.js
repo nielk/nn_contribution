@@ -13,8 +13,8 @@ var pngquantPath = require('pngquant-bin').path,
 var minify = function(imagePath, callback){
 
 	// is the image file exists ?
-	fs.stat(imagePath, function(err, stat) {
-		if(err === null) { // file exists
+	fs.exists(imagePath, function(exists) {
+		if(exists) { // file exists
 			// extension image (png, jpg etc...)
 			var ext = path.extname(imagePath).toLowerCase();
 
@@ -22,13 +22,10 @@ var minify = function(imagePath, callback){
 				case '.png':
 					// resize dimension of image
 					imageMagick.convert([imagePath, '-resize', '500x420', imagePath], function(err) {
+						if (err) cb(err);
 						// optimize image
 						execFile(pngquantPath, ['--force', '--ext', '.png', imagePath], function(err) {
-							if(err !== null) {
-								cb(err);
-							} else {
-								cb();
-							}
+							cb(err ? err : null);
 						});
 					});
 					break;
@@ -37,36 +34,19 @@ var minify = function(imagePath, callback){
 				case '.jpeg':
 					// resize dimension of image
 					imageMagick.convert([imagePath, '-resize', '500x420', imagePath], function(err) {
+						if(err) cb(err);
 						// optimize image
 						execFile(jpegtranPath, ['-outfile', imagePath, imagePath], function(err) {
-							if(err !== null) {
-								cb(err);
-							} else {
-								cb();
-							}
+							cb(err ? err : null);
 						});
 					});
 					break;
 				// image extension not allowed
 				default:
-					if(err !== null) {
-						cb(err, 'Image format not supported (accepted formats: png, jpg)');
-					} else {
-						cb(new Error(), 'Image format not supported (accepted formats: png, jpg)');
-					}
+					cb(new Error(), 'Image format not supported (accepted formats: png, jpg)');
 			}		
-		} else if(err.code == 'ENOENT') { // file doesn't exist
-			if(err !== null) {
-					cb(err, 'Command failed:   error: cannot open lostImage.png for reading\n');
-				} else {
-					cb();
-				}
 		} else { // another type of error
-			if(err !== null) {
-					cb(err);
-				} else {
-					cb();
-				}
+			cb(new Error(), 'Command failed:   error: image does not exist\n');
 		}
 	});
 	

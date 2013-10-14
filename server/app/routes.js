@@ -65,12 +65,12 @@ var insertChose = function (req, res) {
 	// move the uploaded image from temp to uploads directory
 	fs.readFile(fileImage.path, function (err, data) {
 		fs.writeFile(newPath, data, function (err) {
-			if (err !== null) {
+			if (err) {
 				res.send('error : '+err , 500);
 			} else {
 			// minify the new image in uploads directory
 				minify(newPath, function (err) {
-					if(err !== null) {
+					if(err) {
 						res.send('error : minification failed...\n'+err , 500);
 					}
 				});
@@ -98,24 +98,45 @@ var insertChose = function (req, res) {
 				res.send('error : cannot save object Chose\n'+err , 500);
 			} else {
 
-				res.status(201).send('image uploaded');
-
-				// send an email to the moderator
-				var msg = "<b>Hello, un nouvel objet a été ajouté ! cliquer ici pour le valider : "+
-					"<a href=\"http://localhost:9999/valid/"+imageName+"/"+password+"\">cliquer</a></b>",
-					subject = "Nouveau contenu à valider",
-					to = moderator;
-
-				mail(msg, subject, to, req, res);
+				var result = {
+					uploaded: true
+				};
 
 				// send an email to the contributor
-				msg = "Bonjour ! L'objet que vous venez de poster sur <a href='http://cecinestpasavendre.vlipp.fr'>"+
+				msg = "Bonjour ! L'objet que vous venez de posté sur <a href='http://cecinestpasavendre.vlipp.fr'>"+
 					"http://cecinestpasavendre.vlipp.fr</a> est en cours de validation. Vous receverez"+
 					" un email lorsqu'il sera validé.";
 				subject = "Votre objet est en cours de validation";
 				to = req.body.email;
 
-				mail(msg, subject, to, req, res);
+				mail(msg, subject, to, function(err, status) {
+					if(err) {
+						result.contributor = false;
+					} else {
+						result.contributor = true;
+					}
+
+					// send an email to the moderator
+					var msg = "<b>Hello, un nouvel objet a été ajouté ! cliquer ici pour le valider : "+
+					"<a href=\"http://localhost:9999/valid/"+imageName+"/"+password+"\">cliquer</a></b>",
+					subject = "Nouveau contenu à valider",
+					to = moderator;
+
+					mail(msg, subject, to, function(err, status) {
+						if(err) {
+							result.moderator = false;
+						} else {
+							result.moderator = true;
+						}
+
+						if(result.uploaded && result.moderator && result.contributor) {
+						res.send(result, 200);
+						} else {
+							res.send(result, 500);
+						}
+					});
+				});
+	
 			}
 		});
 	}

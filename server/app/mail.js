@@ -17,24 +17,39 @@ var smtpTransport = nodemailer.createTransport("SMTP",{
  * @param {Object} req - the recieved request
  * @param {Object} res - the request being sent
  */
-var sendMail = function(msg, subject, to, res, req) {
+var sendMail = function(msg, subject, to, callback) {
 
-	var mailOptions = {
-		generateTextFromHTML: true,
-		from: "cecinestpasavendre ✔ <cecinestpasavendre@vlipp.fr>", // sender address
-		to: to, // list of receivers
-		subject: subject, // Subject line
-		html: msg // html body
+	var cb = function(err, msg){
+		if (callback && typeof(callback) === 'function' && err !== null) {
+			callback(new Error(msg));
+		} else {
+			callback();
+		}
 	};
 
-	// send mail with defined transport object
-	smtpTransport.sendMail(mailOptions, function(error, response){
-		if(error){
-			// res.send('error : cannot send email :\n'+error , 500);
-		}else{
-			// res.send('Message sent: \n'+response.message , 200);
-		}
+	// verify inputs
+	var args = [msg, subject, to];
+
+	var valid = args.some(function(arg) {
+		return typeof arg !== 'string' || arg === '';
 	});
+
+	if(valid) {
+		cb(new Error(),'one or more arguments are invalid');
+	} else {
+		var mailOptions = {
+			generateTextFromHTML: true,
+			from: "cecinestpasavendre ✔ <cecinestpasavendre@vlipp.fr>", // sender address
+			to: to, // list of receivers
+			subject: subject, // Subject line
+			html: msg // html body
+		};
+
+		// send mail with defined transport object
+		smtpTransport.sendMail(mailOptions, function(error, status){
+			callback(error, status);
+		});
+	}
 };
 
 module.exports = sendMail;
